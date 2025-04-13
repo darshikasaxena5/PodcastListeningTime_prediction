@@ -1,18 +1,35 @@
 import streamlit as st
 import pandas as pd
 import joblib
+import os
+import requests
 
-st.set_page_config(page_title="Podcast Listener Time Predictor", layout="centered")
+# Download model.pkl from Google Drive if not present
+MODEL_PATH = "model.pkl"
+FILE_ID = "1YnaNPOt5oj9S1rxdJmZXgL1OWY93Qm0N"
+DOWNLOAD_URL = f"https://drive.google.com/uc?export=download&id={FILE_ID}"
+
+def download_model():
+    try:
+        st.info("Downloading model...")
+        response = requests.get(DOWNLOAD_URL)
+        with open(MODEL_PATH, "wb") as f:
+            f.write(response.content)
+        st.success("Model downloaded successfully.")
+    except Exception as e:
+        st.error(f"Failed to download model: {e}")
+
+if not os.path.exists(MODEL_PATH):
+    download_model()
 
 # Load model
-model = joblib.load("model.pkl")
+model = joblib.load(MODEL_PATH)
 
-# App title
+# Streamlit App
+st.set_page_config(page_title="Podcast Listener Time Predictor", layout="centered")
 st.title("🎧 Podcast Listening Time Predictor")
-
 st.markdown("Fill in the podcast episode details below to predict how long people will likely listen to it.")
 
-# Input form
 with st.form("input_form"):
     col1, col2 = st.columns(2)
 
@@ -28,13 +45,12 @@ with st.form("input_form"):
 
     with col2:
         Episode_Title_num = st.number_input("Title Text Complexity Score", min_value=0.0, value=0.5)
-        Ad_Density = Number_of_Ads / max(Episode_Length_minutes, 1)  # Avoid division by 0
+        Ad_Density = Number_of_Ads / max(Episode_Length_minutes, 1)
         Popularity_Diff = Host_Popularity_percentage - Guest_Popularity_percentage
         Popularity_Interaction = Host_Popularity_percentage * Guest_Popularity_percentage
         Host_Popularity_squared = Host_Popularity_percentage ** 2
         Popularity_Average = (Host_Popularity_percentage + Guest_Popularity_percentage) / 2
 
-        # Show computed features
         st.write(f"**Ad Density:** {Ad_Density:.3f}")
         st.write(f"**Popularity Difference:** {Popularity_Diff}")
         st.write(f"**Popularity Interaction:** {Popularity_Interaction}")
@@ -43,7 +59,6 @@ with st.form("input_form"):
 
     submitted = st.form_submit_button("Predict Listening Time")
 
-# Map Genre and Day to numeric if needed
 genre_mapping = {
     "Education": 0,
     "Comedy": 1,
