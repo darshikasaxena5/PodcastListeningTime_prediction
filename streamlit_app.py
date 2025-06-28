@@ -3,8 +3,10 @@ import pandas as pd
 import joblib
 import os
 import requests
+import matplotlib.pyplot as plt
+import xgboost as xgb
 
-# Download model.pkl from Google Drive if not present
+
 MODEL_PATH = "model.pkl"
 FILE_ID = "1YnaNPOt5oj9S1rxdJmZXgL1OWY93Qm0N"
 DOWNLOAD_URL = f"https://drive.google.com/uc?export=download&id={FILE_ID}"
@@ -22,10 +24,10 @@ def download_model():
 if not os.path.exists(MODEL_PATH):
     download_model()
 
-# Load model
+
 model = joblib.load(MODEL_PATH)
 
-# Streamlit App
+
 st.set_page_config(page_title="Podcast Listener Time Predictor", layout="centered")
 st.title("🎧 Podcast Listening Time Predictor")
 st.markdown("Fill in the podcast episode details below to predict how long people will likely listen to it.")
@@ -93,3 +95,9 @@ if submitted:
 
     prediction = model.predict(input_data)[0]
     st.success(f"🎯 **Predicted Listening Time:** {prediction:.2f} minutes")
+
+   
+    st.subheader("📊 Feature Importance (What matters most?)")
+    fig, ax = plt.subplots(figsize=(10, 6))
+    xgb.plot_importance(model, ax=ax, importance_type='gain', title='Feature Importance (by Gain)')
+    st.pyplot(fig)
